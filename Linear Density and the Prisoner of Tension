@@ -1,0 +1,61 @@
+import numpy as np
+from scipy.optimize import fsolve
+import matplotlib.pyplot as plt
+
+def catenary_solver(length, tension_horizontal, x_start, y_start, x_end, y_end):
+    gravity = 9.811  # Gravitational acceleration (m/s²)
+
+    # System of equations to solve for a1, a2, lambda_, and mass_density
+    def system(vars):
+        a1, a2, lambda_, mass_density = vars
+        return [
+            (a1 / (mass_density * gravity)) * np.cosh((mass_density * gravity / a1) * a2) - (lambda_ / (mass_density * gravity)) - y_start,
+            (a1 / (mass_density * gravity)) * np.cosh((mass_density * gravity / a1) * (x_end + a2)) - (lambda_ / (mass_density * gravity)) - y_end,
+            (a1 / (mass_density * gravity)) * (np.sinh((mass_density * gravity / a1) * (x_end + a2)) - np.sinh((mass_density * gravity / a1) * a2)) - length,
+            mass_density * gravity * a1 - tension_horizontal  # Horizontal tension condition
+        ]
+
+    # Adjusted initial guesses
+    initial_estimate = [0.002, 0.002, 0.002, 0.002]
+
+    # Solve the system of equations with relaxed tolerance
+    solution_set = fsolve(system, initial_estimate, xtol=1e-6)
+
+    return solution_set
+
+def plot_catenary_curve(a1, a2, mass_density, x_start, y_start, x_end, y_end):
+    gravity = 9.811  # Gravitational acceleration (m/s²)
+    x_values = np.linspace(x_start, x_end, 500)  # Generate x values between the start and end points
+    y_values = (a1 / (mass_density * gravity)) * np.cosh((mass_density * gravity / a1) * (x_values + a2)) - (a1 / (mass_density * gravity)) * np.cosh((mass_density * gravity / a2))
+    
+    # Plot the catenary curve
+    plt.plot(x_values, y_values, color='darkorange', label='Catenary Shape')
+    plt.scatter([x_start, x_end], [y_start, y_end], color='indianred', label='Anchored Points')
+   
+    # Labels and legend
+    plt.title(f'Catenary Curve (Mass Density: {mass_density:.5f} kg/m)')
+    plt.xlabel('Horizontal Distance (m)')
+    plt.ylabel('Vertical Distance (m)')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+if __name__ == "__main__":
+    # User inputs
+    print("This tool should be used with point A at the origin and point B as the right endpoint of the curve.\n")
+    length = float(input("Enter the total length of the cable (meters): "))
+    x_start, y_start = 0, 0
+    x_end, y_end = float(input("Enter the x-coordinate of the endpoint (m): ")), float(input("Enter the y-coordinate of the endpoint (m): "))
+    
+    # Get weight in kilograms and calculate horizontal tension T0
+    mass_at_lowest_point = float(input("Enter the weight at the lowest point (kg): "))
+    tension_horizontal = 9.811 * mass_at_lowest_point  # Horizontal tension calculation
+
+    # Solve for a1, a2, lambda_, and mass_density
+    a1, a2, lambda_, mass_density = catenary_solver(length, tension_horizontal, x_start, y_start, x_end, y_end)
+
+    # Display the results
+    print(f"Solution:\n a1 = {a1}\n a2 = {a2}\n lambda = {lambda_}\n Mass Density = {mass_density}")
+
+    # Plot the catenary curve
+    plot_catenary_curve(a1, a2, mass_density, x_start, y_start, x_end, y_end)
