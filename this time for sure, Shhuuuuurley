@@ -1,0 +1,44 @@
+import numpy as np
+from scipy.optimize import fsolve
+import matplotlib.pyplot as plt
+
+def solve_catenary(L, T0, x1, y1, x2, y2):
+    g = 9.811  # Gravitational acceleration (m/s²)
+
+    def equations(vars):
+        c1, c2, lambd, mu = vars
+        return [
+            (c1 / (mu * g)) * np.cosh((mu * g / c1) * c2) - (lambd / (mu * g)) - y1,
+            (c1 / (mu * g)) * np.cosh((mu * g / c1) * (x2 + c2)) - (lambd / (mu * g)) - y2,
+            (c1 / (mu * g)) * (np.sinh((mu * g / c1) * (x2 + c2)) - np.sinh((mu * g / c1) * c2)) - L,
+            mu * g * c1 - T0  # Horizontal tension condition
+        ]
+
+    return fsolve(equations, [0.002, 0.002, 0.002, 0.008])
+
+def plot_catenary(c1, c2, mu, x1, y1, x2, y2):
+    g = 9.811
+    x = np.linspace(x1, x2, 500)
+    y = (c1 / (mu * g)) * np.cosh((mu * g / c1) * (x + c2)) - (lambd / (mu * g))
+
+    plt.plot(x, y, 'orange', label='Catenary Curve')
+    plt.scatter([x1, x2], [y1, y2], color='red', label='Endpoints')
+    plt.title(f'Catenary Curve (μ = {mu:.5f} kg/m)')
+    plt.xlabel('x (m)')
+    plt.ylabel('y (m)')
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+if __name__ == "__main__":
+    #rint("Start at (0, 0) with point B as the right endpoint.\n")
+    L = 0.8813
+    #L = float(input("Cable length (m): "))
+    x2, y2 = 0.5240, -0.2991
+    #x2, y2 = float(input("x-coordinate of B (m): ")), float(input("y-coordinate of B (m): "))
+    weight = float(input("Weight at lowest point (kg): "))
+    T0 = 9.811 * weight
+
+    c1, c2, lambd, mu = solve_catenary(L, T0, 0, 0, x2, y2)
+    print(f"c1 = {c1}\nc2 = {c2}\nlambda = {lambd}\nμ = {mu}")
+    plot_catenary(c1, c2, mu, 0, 0, x2, y2)
